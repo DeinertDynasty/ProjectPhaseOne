@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Rick and Morty Character List</title>
+    <style>
+      #container {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      #title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      
+      #subtitle {
+        font-size: 1rem;
+        margin: 0;
+      }
+      
+      #character-list {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      
+      .character {
+        width: 300px;
+        margin: 10px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+      }
+      
+      .character img {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+      
+      .character h3 {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+      }
+      
+      .character p {
+        font-size: 1.2rem;
+        margin: 0;
+      }
+      
+      .details p {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="title">Rick and Morty Characters</div>
+      <div id="subtitle">Click character for details</div>
+    </div>
+    <div id="character-list"></div>
+    
+    <script>
+      fetch('https://rickandmortyapi.com/api/character/')
+        .then(response => response.json())
+        .then(data => {
+          const characterList = document.getElementById('character-list');
+
+          data.results.forEach(character => {
+            const characterElement = document.createElement('div');
+            characterElement.classList.add('character');
+            characterElement.innerHTML = `
+              <img src="${character.image}" alt="${character.name}">
+              <h3>${character.name}</h3>
+              <p>${character.species} - ${character.status}</p>
+              <div class="details"></div>
+            `;
+            characterList.appendChild(characterElement);
+
+            characterElement.addEventListener('click', () => {
+              const detailsElement = characterElement.querySelector('.details');
+              if (detailsElement.innerHTML === '') {
+                fetch(character.url)
+                  .then(response => response.json())
+                  .then(characterData => {
+                    const episodeUrls = characterData.episode;
+                    Promise.all(episodeUrls.map(url => fetch(url)))
+                      .then(responses => Promise.all(responses.map(res => res.json())))
+                      .then(episodes => {
+                        const episodeNames = episodes.map(episode => episode.name);
+                        detailsElement.innerHTML = `
+                          <p><strong>Gender:</strong> ${characterData.gender}</p>
+                          <p><strong>Origin:</strong> ${characterData.origin.name}</p>
+                          <p><strong>Location:</strong> ${characterData.location.name}</p>
+                          <p><strong>First Seen In:</strong> ${episodeNames.join(', ')}</p>
+                        `;
+                      });
+                  });
+              } else {
+                detailsElement.innerHTML = '';
+              }
+            });
+          });
+        });
+    </script>
+  </body>
+</html>
+
+
